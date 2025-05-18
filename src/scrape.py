@@ -4,19 +4,29 @@ import os
 import pyautogui
 import random
 from datetime import datetime
+import logging
+import traceback
 
-# Ensure output directory exists
-OUTPUT_DIR = "html_pages"
+
+OUTPUT_DIR = f'html_pages'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+LOG_FILE = "scrape.log"
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
 
 
 def random_delay(min_sec:int|float=1, max_sec:int|float=3) -> None:
-    """Wait a random amount of time"""
+    """ Wait a random amount of time """
     delay = random.uniform(min_sec, max_sec)
     time.sleep(delay)
 
 
 def open_chrome() -> None:
+    logging.info('open_chrome')
     # First, visit the main site
     chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
     user_data_dir = os.path.abspath("./chrome_manual_profile")
@@ -34,7 +44,8 @@ def open_chrome() -> None:
 
 
 def navigate_to(url: str) -> None:
-    """ Navigate to a specific URL in the browser """            
+    """ Navigate to a specific URL in the browser """   
+    logging.info(f"navigate_to: {url}")         
     # Use keyboard shortcut to focus the address bar
     pyautogui.hotkey('ctrl', 'l')
     random_delay(1, 2)
@@ -51,6 +62,7 @@ def navigate_to(url: str) -> None:
 
 
 def save_page(filename: str) -> None:
+    logging.info(f"save_page: {filename}")
     pyautogui.hotkey('ctrl', 's')
     time.sleep(1)
 
@@ -75,33 +87,45 @@ def save_page(filename: str) -> None:
 
 def check_stop(filename: str) -> bool:
     """ Check if the file exists and if it contains 'ResidentialCard' """
+    logging.info(f"check_stop: {filename}")
     if not os.path.exists(filename):
+        logging.error(f"check_stop: File does not exist: {filename}")
         return True
 
     with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.read()
-        return 'ResidentialCard' not in content
+        if 'ResidentialCard' in content:
+            logging.info(f"check_stop: Continue")
+            return False
+        logging.info(f"check_stop: Stop")
+        return True
         
 
-def scrape_realestate_postcodes(postcode: str) -> None:
+def scrape_realestate_postcode(postcode: str) -> None:
     """ Scrape realestate.com.au for a specific postcode using a normal browser instance """
-    open_chrome()
-                    
-    # Now navigate to search pages for each postcode and capture
-    page_num = 1
-    while True:
-        url = f"https://www.realestate.com.au/rent/in-{postcode}/list-{page_num}?includeSurrounding=false"
-        navigate_to(url)
+    logging.info(f"scrape_realestate_postcode: {postcode} to {OUTPUT_DIR}")
+    try:
+        open_chrome()
+                        
+        # Now navigate to search pages for each postcode and capture
+        page_num = 1
+        while True:
+            url = f"https://www.realestate.com.au/rent/in-{postcode}/list-{page_num}?includeSurrounding=false"
+            navigate_to(url)
 
-        # Generate file name
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{OUTPUT_DIR}/{postcode}_{page_num}_{timestamp}.html"
-        save_page(filename)
+            # Generate file name
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{OUTPUT_DIR}/{postcode}_{page_num}_{timestamp}.html"
+            save_page(filename)
 
-        if check_stop(filename):
-            break
+            if check_stop(filename):
+                break
 
-        page_num += 1
-            
+            page_num += 1
+
+    except Exception as e:
+        logging.error(f"Error scraping postcode {postcode}: {e}\n{traceback.format_exc()}")
+        
     # Close the browser
+    logging.info(f"scrape_realestate_postcode: Closing browser")
     pyautogui.hotkey('alt', 'f4')
