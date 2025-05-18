@@ -57,7 +57,7 @@ def navigate_to(url: str) -> None:
 def save_page(filename: str) -> None:
     logging.info(f"save_page: {filename}")
     pyautogui.hotkey('ctrl', 's')
-    time.sleep(0.1)
+    time.sleep(0.5)
 
     filepath = os.path.abspath(filename)
 
@@ -75,7 +75,7 @@ def save_page(filename: str) -> None:
     pyautogui.press('enter')
 
     # Wait for save to finish before next page
-    time.sleep(3)
+    time.sleep(4)
 
 
 def check_stop(filename: str) -> bool:
@@ -90,9 +90,10 @@ def check_stop(filename: str) -> bool:
         if 'ResidentialCard' in content:
             logging.info(f"check_stop: Continue")
             return False
-        logging.info(f"check_stop: Stop. Deleting file: {filename}")
-        os.remove(filename)
-        return True
+        
+    logging.info(f"check_stop: Stop. Deleting file: {filename}")
+    os.remove(filename)
+    return True
                 
 
 def scrape_realestate_postcode(postcode: str) -> None:
