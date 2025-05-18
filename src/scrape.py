@@ -2,7 +2,6 @@ import subprocess
 import time
 import os
 import pyautogui
-import random
 from datetime import datetime
 import logging
 import traceback
@@ -17,12 +16,6 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S"
 )
-
-
-def random_delay(min_sec:int|float=1, max_sec:int|float=3) -> None:
-    """ Wait a random amount of time """
-    delay = random.uniform(min_sec, max_sec)
-    time.sleep(delay)
 
 
 def open_chrome() -> None:
@@ -48,23 +41,23 @@ def navigate_to(url: str) -> None:
     logging.info(f"navigate_to: {url}")         
     # Use keyboard shortcut to focus the address bar
     pyautogui.hotkey('ctrl', 'l')
-    random_delay(1, 2)
+    time.sleep(0.1)
     
     # Clear any existing text and search for the URL
     pyautogui.hotkey('ctrl', 'a')
-    random_delay(0.5, 1)
+    time.sleep(0.1)
     pyautogui.write(url)
-    random_delay(1, 3)
+    time.sleep(0.1)
     pyautogui.press('enter')
         
     # Wait for page to load
-    time.sleep(3)
+    time.sleep(5)
 
 
 def save_page(filename: str) -> None:
     logging.info(f"save_page: {filename}")
     pyautogui.hotkey('ctrl', 's')
-    time.sleep(1)
+    time.sleep(0.1)
 
     filepath = os.path.abspath(filename)
 
@@ -82,7 +75,7 @@ def save_page(filename: str) -> None:
     pyautogui.press('enter')
 
     # Wait for save to finish before next page
-    random_delay(1, 3)
+    time.sleep(3)
 
 
 def check_stop(filename: str) -> bool:
@@ -97,13 +90,14 @@ def check_stop(filename: str) -> bool:
         if 'ResidentialCard' in content:
             logging.info(f"check_stop: Continue")
             return False
-        logging.info(f"check_stop: Stop")
+        logging.info(f"check_stop: Stop. Deleting file: {filename}")
+        os.remove(filename)
         return True
-        
+                
 
 def scrape_realestate_postcode(postcode: str) -> None:
     """ Scrape realestate.com.au for a specific postcode using a normal browser instance """
-    logging.info(f"scrape_realestate_postcode: {postcode} to {OUTPUT_DIR}")
+    logging.info(f"scrape_realestate_postcode: {postcode}")
     try:
         open_chrome()
                         
