@@ -30,10 +30,19 @@ def random_mouse_activity():
     for _ in range(random.randint(3, 6)):
         x = random.randint(0, screenWidth - 1)
         y = random.randint(0, screenHeight - 1)
-        # Negative x due to second monitor on the left
+        
+        # Move to random position on left monitor (x is negative)
         pyautogui.moveTo(-x, y, duration=random.uniform(0.2, 0.8))
+
+        # Occasionally click
         if random.random() < 0.3:
             pyautogui.click()
+
+        # Occasionally scroll
+        if random.random() < 0.4:
+            scroll_amount = random.randint(-10, 10) * 3  # scroll up/down
+            pyautogui.scroll(scroll_amount)
+
         time.sleep(random.uniform(0.1, 0.5))
 
 
