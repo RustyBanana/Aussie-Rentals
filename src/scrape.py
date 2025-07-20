@@ -30,7 +30,8 @@ def random_mouse_activity():
     for _ in range(random.randint(3, 6)):
         x = random.randint(0, screenWidth - 1)
         y = random.randint(0, screenHeight - 1)
-        pyautogui.moveTo(x, y, duration=random.uniform(0.2, 0.8))
+        # Negative x due to second monitor on the left
+        pyautogui.moveTo(-x, y, duration=random.uniform(0.2, 0.8))
         if random.random() < 0.3:
             pyautogui.click()
         time.sleep(random.uniform(0.1, 0.5))
@@ -58,6 +59,11 @@ def open_chrome() -> None:
     
     print('Click around to show that you are human')
     time.sleep(30)  # Allow user to interact with browser
+
+
+def close_chrome() -> None:
+    logging.info(f"scrape_realestate_postcode: Closing browser")
+    pyautogui.hotkey('alt', 'f4')
 
 
 def navigate_to(url: str) -> None:
@@ -143,7 +149,3 @@ def scrape_realestate_postcode(postcode: str) -> None:
 
     except Exception as e:
         logging.error(f"Error scraping postcode {postcode}: {e}\n{traceback.format_exc()}")
-        
-    # Close the browser
-    logging.info(f"scrape_realestate_postcode: Closing browser")
-    pyautogui.hotkey('alt', 'f4')

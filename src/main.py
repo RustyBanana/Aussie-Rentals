@@ -1,4 +1,4 @@
-from scrape import scrape_realestate_postcode, open_chrome
+from scrape import scrape_realestate_postcode, open_chrome, close_chrome
 from tqdm import tqdm
 
 
@@ -13,3 +13,5 @@ if __name__ == "__main__":
     
     for postcode in pbar:
         scrape_realestate_postcode(postcode)
+
+    close_chrome()
