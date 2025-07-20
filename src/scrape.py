@@ -5,6 +5,7 @@ import pyautogui
 from datetime import datetime
 import logging
 import traceback
+import random
 
 
 OUTPUT_DIR = f'html_pages'
@@ -16,6 +17,23 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S"
 )
+
+
+def random_wait(base=5, jitter=5, max_wait=30):
+    wait = min(base + random.expovariate(1 / jitter), max_wait)
+    logging.info(f"Sleeping for {wait:.2f} seconds")
+    time.sleep(wait)
+
+
+def random_mouse_activity():
+    screenWidth, screenHeight = pyautogui.size()
+    for _ in range(random.randint(3, 6)):
+        x = random.randint(0, screenWidth - 1)
+        y = random.randint(0, screenHeight - 1)
+        pyautogui.moveTo(x, y, duration=random.uniform(0.2, 0.8))
+        if random.random() < 0.3:
+            pyautogui.click()
+        time.sleep(random.uniform(0.1, 0.5))
 
 
 def open_chrome() -> None:
@@ -34,6 +52,8 @@ def open_chrome() -> None:
     
     # Give browser time to open
     time.sleep(3)
+    # Maximize window
+    pyautogui.hotkey('win', 'up')
 
 
 def navigate_to(url: str) -> None:
@@ -51,7 +71,8 @@ def navigate_to(url: str) -> None:
     pyautogui.press('enter')
         
     # Wait for page to load
-    time.sleep(7)
+    random_wait(base=10, jitter=5)
+    random_mouse_activity()
 
 
 def save_page(filename: str) -> None:
