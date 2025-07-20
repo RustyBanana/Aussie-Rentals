@@ -6,6 +6,7 @@ from datetime import datetime
 import logging
 import traceback
 import random
+import shutil
 
 
 OUTPUT_DIR = f'html_pages'
@@ -39,8 +40,8 @@ def random_mouse_activity():
             pyautogui.click()
 
         # Occasionally scroll
-        if random.random() < 0.4:
-            scroll_amount = random.randint(-100, 100) * 3  # scroll up/down
+        if random.random() < 0.9:
+            scroll_amount = random.randint(100, 1000)
             pyautogui.scroll(scroll_amount)
 
         time.sleep(random.uniform(0.1, 0.5))
@@ -51,6 +52,11 @@ def open_chrome() -> None:
     # First, visit the main site
     chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
     user_data_dir = os.path.abspath("./chrome_manual_profile")
+
+    # Delete the chrome_manual_profile folder and all its contents if it exists
+    if os.path.exists(user_data_dir):
+        shutil.rmtree(user_data_dir, ignore_errors=True)
+
     os.makedirs(user_data_dir, exist_ok=True)
     
     # Launch Chrome with a profile
@@ -89,7 +95,6 @@ def navigate_to(url: str) -> None:
         
     # Wait for page to load
     random_wait(base=10, jitter=5)
-    random_mouse_activity()
 
 
 def save_page(filename: str) -> None:
@@ -138,6 +143,8 @@ def scrape_realestate_postcode(postcode: str) -> None:
     """ Scrape realestate.com.au for a specific postcode using a normal browser instance """
     logging.info(f"scrape_realestate_postcode: {postcode}")
     try:                        
+        open_chrome()
+
         # Now navigate to search pages for each postcode and capture
         page_num = 1
         while True:
@@ -148,6 +155,7 @@ def scrape_realestate_postcode(postcode: str) -> None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{OUTPUT_DIR}/{postcode}_{page_num}_{timestamp}.html"
             save_page(filename)
+            random_mouse_activity()
 
             if check_stop(filename):
                 break
@@ -156,3 +164,8 @@ def scrape_realestate_postcode(postcode: str) -> None:
 
     except Exception as e:
         logging.error(f"Error scraping postcode {postcode}: {e}\n{traceback.format_exc()}")
+
+    finally:
+        close_chrome()
+        logging.info(f"Finished scraping postcode {postcode}")
+        time.sleep(2)  # Give some time before next iteration
