@@ -40,7 +40,7 @@ def random_mouse_activity():
 
         # Occasionally scroll
         if random.random() < 0.4:
-            scroll_amount = random.randint(-10, 10) * 3  # scroll up/down
+            scroll_amount = random.randint(-100, 100) * 3  # scroll up/down
             pyautogui.scroll(scroll_amount)
 
         time.sleep(random.uniform(0.1, 0.5))
@@ -63,8 +63,6 @@ def open_chrome() -> None:
     
     # Give browser time to open
     time.sleep(3)
-    # Maximize window
-    pyautogui.hotkey('win', 'up')
     
     print('Click around to show that you are human')
     time.sleep(30)  # Allow user to interact with browser
