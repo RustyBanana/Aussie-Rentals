@@ -33,7 +33,7 @@ def open_chrome() -> None:
     ])
     
     # Give browser time to open
-    time.sleep(2)
+    time.sleep(3)
 
 
 def navigate_to(url: str) -> None:
@@ -51,13 +51,13 @@ def navigate_to(url: str) -> None:
     pyautogui.press('enter')
         
     # Wait for page to load
-    time.sleep(5)
+    time.sleep(7)
 
 
 def save_page(filename: str) -> None:
     logging.info(f"save_page: {filename}")
     pyautogui.hotkey('ctrl', 's')
-    time.sleep(0.5)
+    time.sleep(1)
 
     filepath = os.path.abspath(filename)
 
@@ -75,7 +75,7 @@ def save_page(filename: str) -> None:
     pyautogui.press('enter')
 
     # Wait for save to finish before next page
-    time.sleep(4)
+    time.sleep(6)
 
 
 def check_stop(filename: str) -> bool:
