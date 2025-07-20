@@ -47,6 +47,7 @@ def open_chrome() -> None:
     subprocess.Popen([
         chrome_path,
         "--user-data-dir=" + user_data_dir,
+        #"--incognito",
         "https://www.realestate.com.au/"
     ])
     
@@ -54,6 +55,9 @@ def open_chrome() -> None:
     time.sleep(3)
     # Maximize window
     pyautogui.hotkey('win', 'up')
+    
+    print('Click around to show that you are human')
+    time.sleep(30)  # Allow user to interact with browser
 
 
 def navigate_to(url: str) -> None:
@@ -120,9 +124,7 @@ def check_stop(filename: str) -> bool:
 def scrape_realestate_postcode(postcode: str) -> None:
     """ Scrape realestate.com.au for a specific postcode using a normal browser instance """
     logging.info(f"scrape_realestate_postcode: {postcode}")
-    try:
-        open_chrome()
-                        
+    try:                        
         # Now navigate to search pages for each postcode and capture
         page_num = 1
         while True:

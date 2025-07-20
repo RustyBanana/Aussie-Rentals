@@ -1,8 +1,10 @@
-from scrape import scrape_realestate_postcode
+from scrape import scrape_realestate_postcode, open_chrome
 from tqdm import tqdm
 
 
 if __name__ == "__main__":    
+    open_chrome()
+
     with open("data/postcodes sydney.txt", "r") as file:
         postcodes = [line.strip() for line in file.readlines()]
 
