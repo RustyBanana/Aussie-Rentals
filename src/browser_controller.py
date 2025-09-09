@@ -5,15 +5,15 @@ import shutil
 import subprocess
 import time
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Optional, Tuple
 
 import pyautogui
 from human_mouse import MouseController
 
 from constants import (
-    BASE_URL,
     BRAVE_BROWSER_COMMAND,
     BROWSER_OPEN_WAIT,
+    DEFAULT_URL,
     KEYBOARD_DELAY,
     PAGE_LOAD_BASE_WAIT,
     PAGE_LOAD_JITTER,
@@ -38,6 +38,10 @@ class BrowserController(ABC):
         pass
 
     @abstractmethod
+    def perform_initial_setup(self) -> None:
+        pass
+
+    @abstractmethod
     def close_browser(self) -> None:
         pass
 
@@ -57,9 +61,10 @@ class BrowserController(ABC):
 class BraveBrowserController(BrowserController):
     """Concrete implementation for Brave browser automation"""
 
-    def __init__(self, initial_url: str = BASE_URL):
+    def __init__(self, initial_url: str = DEFAULT_URL):
         """Initialize with configurable starting URL"""
         self.initial_url = initial_url
+        self.browser_bounds: Optional[Tuple[int, int, int, int]] = None
 
     def open_browser(self) -> None:
         logging.info("open_browser: Starting browser initialization")
@@ -90,29 +95,36 @@ class BraveBrowserController(BrowserController):
         )
         time.sleep(BROWSER_OPEN_WAIT)
 
-        print("Performing automated human-like browsing to appear natural")
-        logging.info("open_browser: Beginning initial human-like browsing simulation")
+        # Detect browser window after launch
+        self._detect_browser_window()
+        logging.info("open_browser: Browser initialization complete")
 
-        # Perform initial human-like activity instead of manual clicking
+    def perform_initial_setup(self) -> None:
+        """Perform initial human-like browsing setup after browser is opened"""
+        logging.info(
+            "perform_initial_setup: Beginning initial human-like browsing simulation"
+        )
+
         mouse = MouseController(always_zigzag=True)
         screen_width, screen_height = pyautogui.size()
         logging.info(
-            f"open_browser: Screen dimensions detected: {screen_width}x{screen_height}"
+            f"perform_initial_setup: Screen dimensions detected: {screen_width}x{screen_height}"
         )
 
         # Brief initial browsing simulation
-        logging.info("open_browser: Simulating initial reading pattern")
+        logging.info("perform_initial_setup: Simulating initial reading pattern")
         self._simulate_reading_pattern(mouse, screen_width, screen_height)
 
         wait_time = random.uniform(2, 4)
         logging.info(
-            f"open_browser: Pausing for {wait_time:.2f} seconds between activities"
+            f"perform_initial_setup: Pausing for {wait_time:.2f} seconds between activities"
         )
         time.sleep(wait_time)
 
-        logging.info("open_browser: Simulating initial natural scrolling")
+        logging.info("perform_initial_setup: Simulating initial natural scrolling")
         self._simulate_natural_scrolling(mouse)
-        logging.info("open_browser: Browser initialization and setup complete")
+
+        logging.info("perform_initial_setup: Initial setup complete")
 
     def close_browser(self) -> None:
         logging.info("close_browser")
@@ -172,12 +184,82 @@ class BraveBrowserController(BrowserController):
         time.sleep(SAVE_WAIT)
         logging.info("save_page: Save operation complete")
 
+    def _detect_browser_window(self) -> None:
+        """Detect and store browser window bounds using wmctrl"""
+        try:
+            # Use wmctrl to get window geometry
+            result = subprocess.run(
+                ["wmctrl", "-lG"], capture_output=True, text=True, check=True
+            )
+
+            # Parse wmctrl output to find browser window
+            # Format: window_id desktop x y width height client_machine window_title
+            for line in result.stdout.strip().split("\n"):
+                if line and ("Brave" in line or "Mozilla" in line or "Chrome" in line):
+                    parts = line.split(None, 7)  # Split into max 8 parts
+                    if len(parts) >= 6:
+                        try:
+                            x, y, width, height = map(int, parts[2:6])
+                            self.browser_bounds = (x, y, x + width, y + height)
+                            logging.info(
+                                f"_detect_browser_window: Found browser window at {self.browser_bounds}"
+                            )
+                            return
+                        except ValueError:
+                            continue
+
+            # No browser window found
+            logging.warning(
+                "_detect_browser_window: No browser window found, using full screen"
+            )
+            screen_width, screen_height = pyautogui.size()
+            self.browser_bounds = (0, 0, screen_width, screen_height)
+
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            logging.error(f"_detect_browser_window: wmctrl error: {e}")
+            screen_width, screen_height = pyautogui.size()
+            self.browser_bounds = (0, 0, screen_width, screen_height)
+        except Exception as e:
+            logging.error(f"_detect_browser_window: Unexpected error: {e}")
+            screen_width, screen_height = pyautogui.size()
+            self.browser_bounds = (0, 0, screen_width, screen_height)
+
+    def _get_browser_content_area(self) -> Tuple[int, int, int, int]:
+        """Get the content area of the browser (excluding title bar and toolbars)"""
+        if not self.browser_bounds:
+            self._detect_browser_window()
+
+        if self.browser_bounds:
+            left, top, right, bottom = self.browser_bounds
+            # Add margins to avoid title bar, address bar, and scrollbars
+            content_left = left + 20
+            content_top = top + 100  # Account for title bar and address bar
+            content_right = right - 20  # Account for scrollbar
+            content_bottom = bottom - 50  # Account for status bar
+
+            # Ensure we have a valid area
+            if content_right > content_left and content_bottom > content_top:
+                return content_left, content_top, content_right, content_bottom
+
+        # Fallback to screen center area
+        screen_width, screen_height = pyautogui.size()
+        return (
+            int(screen_width * 0.1),
+            int(screen_height * 0.1),
+            int(screen_width * 0.9),
+            int(screen_height * 0.9),
+        )
+
     def generate_random_coordinates(
         self, screen_width: int, screen_height: int
     ) -> Tuple[int, int]:
-        """Pure function to generate random screen coordinates"""
-        x = random.randint(0, screen_width - 1)
-        y = random.randint(0, screen_height - 1)
+        """Generate random coordinates within browser content area"""
+        content_left, content_top, content_right, content_bottom = (
+            self._get_browser_content_area()
+        )
+
+        x = random.randint(content_left, content_right - 1)
+        y = random.randint(content_top, content_bottom - 1)
         return x, y
 
     def perform_human_like_activity(self) -> None:
@@ -202,10 +284,6 @@ class BraveBrowserController(BrowserController):
         )
         self._simulate_natural_scrolling(mouse)
 
-        # Brief scanning of the page
-        logging.info("perform_human_like_activity: Phase 3 - Simulating page scanning")
-        self._simulate_scanning_pattern(mouse, screen_width, screen_height)
-
         logging.info(
             "perform_human_like_activity: All human-like browsing simulation phases complete"
         )
@@ -214,9 +292,13 @@ class BraveBrowserController(BrowserController):
         self, mouse: MouseController, screen_width: int, screen_height: int
     ) -> None:
         """Simulate reading text in a natural left-to-right, top-to-bottom pattern"""
-        # Start from top-left area where content typically begins
-        start_x = int(screen_width * 0.1)  # 10% from left edge
-        start_y = int(screen_height * 0.2)  # 20% from top
+        content_left, content_top, content_right, content_bottom = (
+            self._get_browser_content_area()
+        )
+
+        # Start from top-left area of browser content where text typically begins
+        start_x = content_left + 50  # Small margin from left edge
+        start_y = content_top + 50  # Small margin from top
         logging.info(
             f"_simulate_reading_pattern: Starting reading simulation at ({start_x}, {start_y})"
         )
@@ -247,8 +329,9 @@ class BraveBrowserController(BrowserController):
             )
             time.sleep(pause_time)  # Brief pause at line start
 
-            # Read across the line (simulate eye movement)
-            end_x = start_x + random.randint(400, 600)  # Variable line length
+            # Read across the line (simulate eye movement) - stay within browser bounds
+            max_line_length = min(600, content_right - start_x - 50)
+            end_x = start_x + random.randint(300, max_line_length)
             read_speed = random.uniform(0.6, 1.0)
             logging.info(
                 f"_simulate_reading_pattern: Reading across line to x={end_x} with speed {read_speed:.2f}"
@@ -264,78 +347,6 @@ class BraveBrowserController(BrowserController):
 
         logging.info("_simulate_reading_pattern: Reading pattern simulation complete")
 
-    def _simulate_scanning_pattern(
-        self, mouse: MouseController, screen_width: int, screen_height: int
-    ) -> None:
-        """Simulate F-pattern scanning behavior common in web browsing"""
-        logging.info(
-            "_simulate_scanning_pattern: Starting F-pattern scanning simulation"
-        )
-        # F-pattern: horizontal movements at top, middle, then vertical scan
-
-        # Top horizontal scan
-        top_y = int(screen_height * 0.15)
-        logging.info(f"_simulate_scanning_pattern: Top horizontal scan at y={top_y}")
-
-        speed1 = random.uniform(0.8, 1.2)
-        logging.info(
-            f"_simulate_scanning_pattern: Moving to top-left with speed {speed1:.2f}"
-        )
-        mouse.move(int(screen_width * 0.1), top_y, speed_factor=speed1)
-        time.sleep(0.2)
-
-        speed2 = random.uniform(0.6, 1.0)
-        logging.info(
-            f"_simulate_scanning_pattern: Scanning across top with speed {speed2:.2f}"
-        )
-        mouse.move(int(screen_width * 0.7), top_y, speed_factor=speed2)
-
-        pause1 = random.uniform(0.5, 1.0)
-        logging.info(
-            f"_simulate_scanning_pattern: Pausing {pause1:.2f}s after top scan"
-        )
-        time.sleep(pause1)
-
-        # Middle horizontal scan (shorter)
-        mid_y = int(screen_height * 0.4)
-        logging.info(f"_simulate_scanning_pattern: Middle horizontal scan at y={mid_y}")
-
-        speed3 = random.uniform(0.8, 1.2)
-        logging.info(
-            f"_simulate_scanning_pattern: Moving to middle-left with speed {speed3:.2f}"
-        )
-        mouse.move(int(screen_width * 0.1), mid_y, speed_factor=speed3)
-        time.sleep(0.2)
-
-        speed4 = random.uniform(0.6, 1.0)
-        logging.info(
-            f"_simulate_scanning_pattern: Scanning across middle (shorter) with speed {speed4:.2f}"
-        )
-        mouse.move(int(screen_width * 0.5), mid_y, speed_factor=speed4)
-
-        pause2 = random.uniform(0.3, 0.8)
-        logging.info(
-            f"_simulate_scanning_pattern: Pausing {pause2:.2f}s after middle scan"
-        )
-        time.sleep(pause2)
-
-        # Vertical scan down the left side
-        logging.info("_simulate_scanning_pattern: Beginning vertical left-side scan")
-        for i, progress in enumerate([0.6, 0.7, 0.8]):
-            y_pos = int(screen_height * progress)
-            speed = random.uniform(0.7, 1.1)
-            logging.info(
-                f"_simulate_scanning_pattern: Vertical scan point {i + 1}/3 at y={y_pos} with speed {speed:.2f}"
-            )
-            mouse.move(int(screen_width * 0.15), y_pos, speed_factor=speed)
-            pause = random.uniform(0.2, 0.5)
-            logging.info(
-                f"_simulate_scanning_pattern: Pausing {pause:.2f}s at scan point"
-            )
-            time.sleep(pause)
-
-        logging.info("_simulate_scanning_pattern: F-pattern scanning complete")
-
     def _simulate_natural_scrolling(self, mouse: MouseController) -> None:
         """Simulate natural scrolling behavior while reading"""
         num_scrolls = random.randint(2, 4)
@@ -348,12 +359,16 @@ class BraveBrowserController(BrowserController):
                 f"_simulate_natural_scrolling: Scroll action {i + 1}/{num_scrolls}"
             )
 
-            # Move to a random position before scrolling (more natural)
+            # Move to a random position within browser before scrolling (more natural)
             speed = random.uniform(1.0, 2.0)
             logging.info(
                 f"_simulate_natural_scrolling: Moving to random position with speed {speed:.2f}"
             )
-            mouse.move_random(speed_factor=speed)
+            # Generate random coordinates within browser bounds
+            rand_x, rand_y = self.generate_random_coordinates(
+                0, 0
+            )  # screen params not used anymore
+            mouse.move(rand_x, rand_y, speed_factor=speed)
 
             move_pause = random.uniform(0.2, 0.5)
             logging.info(

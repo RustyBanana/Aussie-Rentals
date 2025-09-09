@@ -21,6 +21,7 @@ if __name__ == "__main__":
 
     try:
         browser_controller.open_browser()
+        browser_controller.perform_initial_setup()
 
         # Given the list of populated postcodes, scrape each one
         pbar = tqdm(postcodes, desc="Scraping Realestate Postcodes", unit="postcode")

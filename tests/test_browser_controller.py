@@ -1,3 +1,4 @@
+import logging
 import time
 
 from browser_controller import BraveBrowserController
@@ -8,8 +9,8 @@ class TestBraveBrowserController:
 
     def test_wikipedia_human_activity_integration(self):
         """Integration test that opens Wikipedia WWII page and performs human-like activity"""
-        wikipedia_url = "https://en.wikipedia.org/wiki/World_War_II"
-        browser_controller = BraveBrowserController(initial_url=wikipedia_url)
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+        browser_controller = BraveBrowserController()
 
         try:
             # Open browser (will start at Wikipedia)
