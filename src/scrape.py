@@ -98,18 +98,14 @@ def scrape_all_pages(postcode: str, browser_controller: BrowserController) -> No
 
 
 def scrape_realestate_postcode(
-    postcode: str, browser_controller: Optional[BrowserController] = None
+    postcode: str, browser_controller: BrowserController
 ) -> None:
     """Scrape realestate.com.au for a specific postcode using a browser controller"""
     if not postcode or not postcode.strip():
         raise ValueError(f"Invalid postcode provided: '{postcode}'")
 
-    if browser_controller is None:
-        browser_controller = BraveBrowserController()
-
     logging.info(f"scrape_realestate_postcode: {postcode}")
     try:
-        browser_controller.open_browser()
         scrape_all_pages(postcode, browser_controller)
 
     except Exception as e:
@@ -119,6 +115,5 @@ def scrape_realestate_postcode(
         raise
 
     finally:
-        browser_controller.close_browser()
         logging.info(f"Finished scraping postcode {postcode}")
         time.sleep(ITERATION_WAIT)

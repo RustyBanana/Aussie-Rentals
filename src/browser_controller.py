@@ -5,31 +5,21 @@ import shutil
 import subprocess
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Tuple
 
 import pyautogui
+from human_mouse import MouseController
 
 from constants import (
     BASE_URL,
     BRAVE_BROWSER_COMMAND,
     BROWSER_OPEN_WAIT,
-    CLICK_PROBABILITY,
     KEYBOARD_DELAY,
-    MAX_ACTIVITY_ACTIONS,
-    MAX_ACTIVITY_WAIT,
-    MAX_MOVE_DURATION,
-    MAX_SCROLL_AMOUNT,
-    MIN_ACTIVITY_ACTIONS,
-    MIN_ACTIVITY_WAIT,
-    MIN_MOVE_DURATION,
-    MIN_SCROLL_AMOUNT,
     PAGE_LOAD_BASE_WAIT,
     PAGE_LOAD_JITTER,
     SAVE_DIALOG_WAIT,
     SAVE_WAIT,
-    SCROLL_PROBABILITY,
     USER_DATA_DIR,
-    USER_INTERACTION_WAIT,
 )
 
 
@@ -84,8 +74,16 @@ class BraveBrowserController(BrowserController):
 
         time.sleep(BROWSER_OPEN_WAIT)
 
-        print("Click around to show that you are human")
-        time.sleep(USER_INTERACTION_WAIT)
+        print("Performing automated human-like browsing to appear natural")
+
+        # Perform initial human-like activity instead of manual clicking
+        mouse = MouseController(always_zigzag=True)
+        screen_width, screen_height = pyautogui.size()
+
+        # Brief initial browsing simulation
+        self._simulate_reading_pattern(mouse, screen_width, screen_height)
+        time.sleep(random.uniform(2, 4))
+        self._simulate_natural_scrolling(mouse)
 
     def close_browser(self) -> None:
         logging.info("close_browser")
@@ -138,44 +136,107 @@ class BraveBrowserController(BrowserController):
         y = random.randint(0, screen_height - 1)
         return x, y
 
-    def generate_activity_plan(
-        self, num_actions: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
-        """Pure function to generate a plan of human-like activities"""
-        if num_actions is None:
-            num_actions = random.randint(MIN_ACTIVITY_ACTIONS, MAX_ACTIVITY_ACTIONS)
-
-        activities = []
-        for _ in range(num_actions):
-            activity = {
-                "should_click": random.random() < CLICK_PROBABILITY,
-                "should_scroll": random.random() < SCROLL_PROBABILITY,
-                "scroll_amount": random.randint(MIN_SCROLL_AMOUNT, MAX_SCROLL_AMOUNT),
-                "move_duration": random.uniform(MIN_MOVE_DURATION, MAX_MOVE_DURATION),
-                "wait_time": random.uniform(MIN_ACTIVITY_WAIT, MAX_ACTIVITY_WAIT),
-            }
-            activities.append(activity)
-        return activities
-
     def perform_human_like_activity(self) -> None:
-        screenWidth, screenHeight = pyautogui.size()
-        activities = self.generate_activity_plan()
+        """Perform realistic human-like browsing behavior"""
+        logging.info("Starting human-like browsing simulation")
 
-        for activity in activities:
-            x, y = self.generate_random_coordinates(screenWidth, screenHeight)
+        mouse = MouseController(always_zigzag=True)
+        screen_width, screen_height = pyautogui.size()
 
-            # Move to random position on left monitor (x is negative)
-            pyautogui.moveTo(-x, y, duration=activity["move_duration"])
+        # Simulate reading the page content
+        self._simulate_reading_pattern(mouse, screen_width, screen_height)
 
-            # Occasionally click
-            if activity["should_click"]:
-                pyautogui.click()
+        # Natural scrolling behavior
+        self._simulate_natural_scrolling(mouse)
 
-            # Occasionally scroll
-            if activity["should_scroll"]:
-                pyautogui.scroll(activity["scroll_amount"])
+        # Brief scanning of the page
+        self._simulate_scanning_pattern(mouse, screen_width, screen_height)
 
-            time.sleep(activity["wait_time"])
+        logging.info("Completed human-like browsing simulation")
+
+    def _simulate_reading_pattern(
+        self, mouse: MouseController, screen_width: int, screen_height: int
+    ) -> None:
+        """Simulate reading text in a natural left-to-right, top-to-bottom pattern"""
+        # Start from top-left area where content typically begins
+        start_x = int(screen_width * 0.1)  # 10% from left edge
+        start_y = int(screen_height * 0.2)  # 20% from top
+
+        # Simulate reading 3-4 lines of text
+        num_lines = random.randint(3, 4)
+        line_height = 25  # Approximate line height in pixels
+
+        for line in range(num_lines):
+            y_pos = start_y + (line * line_height)
+
+            # Move to start of line with natural movement
+            mouse.move(start_x, y_pos, speed_factor=random.uniform(0.8, 1.2))
+            time.sleep(random.uniform(0.1, 0.3))  # Brief pause at line start
+
+            # Read across the line (simulate eye movement)
+            end_x = start_x + random.randint(400, 600)  # Variable line length
+            mouse.move(end_x, y_pos, speed_factor=random.uniform(0.6, 1.0))
+
+            # Pause at end of line (reading time)
+            time.sleep(random.uniform(0.8, 1.5))
+
+    def _simulate_scanning_pattern(
+        self, mouse: MouseController, screen_width: int, screen_height: int
+    ) -> None:
+        """Simulate F-pattern scanning behavior common in web browsing"""
+        # F-pattern: horizontal movements at top, middle, then vertical scan
+
+        # Top horizontal scan
+        top_y = int(screen_height * 0.15)
+        mouse.move(
+            int(screen_width * 0.1), top_y, speed_factor=random.uniform(0.8, 1.2)
+        )
+        time.sleep(0.2)
+        mouse.move(
+            int(screen_width * 0.7), top_y, speed_factor=random.uniform(0.6, 1.0)
+        )
+        time.sleep(random.uniform(0.5, 1.0))
+
+        # Middle horizontal scan (shorter)
+        mid_y = int(screen_height * 0.4)
+        mouse.move(
+            int(screen_width * 0.1), mid_y, speed_factor=random.uniform(0.8, 1.2)
+        )
+        time.sleep(0.2)
+        mouse.move(
+            int(screen_width * 0.5), mid_y, speed_factor=random.uniform(0.6, 1.0)
+        )
+        time.sleep(random.uniform(0.3, 0.8))
+
+        # Vertical scan down the left side
+        for progress in [0.6, 0.7, 0.8]:
+            y_pos = int(screen_height * progress)
+            mouse.move(
+                int(screen_width * 0.15), y_pos, speed_factor=random.uniform(0.7, 1.1)
+            )
+            time.sleep(random.uniform(0.2, 0.5))
+
+    def _simulate_natural_scrolling(self, mouse: MouseController) -> None:
+        """Simulate natural scrolling behavior while reading"""
+        num_scrolls = random.randint(2, 4)
+
+        for _ in range(num_scrolls):
+            # Move to a random position before scrolling (more natural)
+            mouse.move_random(speed_factor=random.uniform(1.0, 2.0))
+            time.sleep(random.uniform(0.2, 0.5))
+
+            # Small scroll amounts like a human reading
+            scroll_amount = random.randint(100, 300)
+            pyautogui.scroll(-scroll_amount)  # Negative for scrolling down
+
+            # Pause to "read" the new content
+            reading_time = random.uniform(1.5, 3.0)
+            time.sleep(reading_time)
+
+            # Occasionally scroll back up slightly (like re-reading)
+            if random.random() < 0.3:
+                pyautogui.scroll(random.randint(50, 100))
+                time.sleep(random.uniform(0.5, 1.0))
 
     def _random_wait(
         self, base: float = 5, jitter: float = 5, max_wait: float = 30
