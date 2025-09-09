@@ -1,3 +1,4 @@
 src/__pycache__
 chrome_manual_profile/
 scrape.log
+.aider*

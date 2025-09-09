@@ -1,11 +1,11 @@
-from scrape import scrape_realestate_postcode
+from scrape import scrape_realestate_postcode, POSTCODES_FILE, MIN_POSTCODE
 from tqdm import tqdm
 
 
 if __name__ == "__main__":    
-    with open("data/postcodes sydney.txt", "r") as file:
+    with open(POSTCODES_FILE, "r") as file:
         postcodes = [line.strip() for line in file.readlines()]
-        postcodes = [p for p in postcodes if p >= '2008']
+        postcodes = [p for p in postcodes if p >= MIN_POSTCODE]
 
     # Given the list of populated postcodes, scrape each one
     pbar = tqdm(postcodes, desc="Scraping Realestate Postcodes", unit="postcode")

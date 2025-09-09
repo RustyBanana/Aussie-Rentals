@@ -9,9 +9,25 @@ import random
 import shutil
 
 
-OUTPUT_DIR = f'html_pages'
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+# Configuration constants
+BRAVE_BROWSER_COMMAND = "brave-browser"
+USER_DATA_DIR = "./brave_manual_profile"
+BASE_URL = "https://www.realestate.com.au/"
+SEARCH_URL_TEMPLATE = "https://www.realestate.com.au/rent/in-{postcode}/list-{page_num}?includeSurrounding=false"
+OUTPUT_DIR = "html_pages"
 LOG_FILE = "scrape.log"
+POSTCODES_FILE = "data/postcodes sydney.txt"
+MIN_POSTCODE = "2008"
+
+# Wait time constants
+BROWSER_OPEN_WAIT = 3
+USER_INTERACTION_WAIT = 30
+PAGE_LOAD_BASE_WAIT = 10
+PAGE_LOAD_JITTER = 5
+SAVE_WAIT = 6
+ITERATION_WAIT = 2
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 logging.basicConfig(
     filename=LOG_FILE,
     level=logging.INFO,
@@ -47,34 +63,32 @@ def random_mouse_activity():
         time.sleep(random.uniform(0.1, 0.5))
 
 
-def open_chrome() -> None:
-    logging.info('open_chrome')
+def open_brave() -> None:
+    logging.info('open_brave')
     # First, visit the main site
-    chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-    user_data_dir = os.path.abspath("./chrome_manual_profile")
+    user_data_dir = os.path.abspath(USER_DATA_DIR)
 
-    # Delete the chrome_manual_profile folder and all its contents if it exists
+    # Delete the brave_manual_profile folder and all its contents if it exists
     if os.path.exists(user_data_dir):
         shutil.rmtree(user_data_dir, ignore_errors=True)
 
     os.makedirs(user_data_dir, exist_ok=True)
     
-    # Launch Chrome with a profile
+    # Launch Brave with a profile
     subprocess.Popen([
-        chrome_path,
+        BRAVE_BROWSER_COMMAND,
         "--user-data-dir=" + user_data_dir,
         #"--incognito",
-        "https://www.realestate.com.au/"
+        BASE_URL
     ])
     
-    # Give browser time to open
-    time.sleep(3)
+    time.sleep(BROWSER_OPEN_WAIT)
     
     print('Click around to show that you are human')
-    time.sleep(30)  # Allow user to interact with browser
+    time.sleep(USER_INTERACTION_WAIT)
 
 
-def close_chrome() -> None:
+def close_brave() -> None:
     logging.info(f"scrape_realestate_postcode: Closing browser")
     pyautogui.hotkey('alt', 'f4')
 
@@ -94,7 +108,7 @@ def navigate_to(url: str) -> None:
     pyautogui.press('enter')
         
     # Wait for page to load
-    random_wait(base=10, jitter=5)
+    random_wait(base=PAGE_LOAD_BASE_WAIT, jitter=PAGE_LOAD_JITTER)
 
 
 def save_page(filename: str) -> None:
@@ -118,7 +132,7 @@ def save_page(filename: str) -> None:
     pyautogui.press('enter')
 
     # Wait for save to finish before next page
-    time.sleep(6)
+    time.sleep(SAVE_WAIT)
 
 
 def check_stop(filename: str) -> bool:
@@ -143,12 +157,12 @@ def scrape_realestate_postcode(postcode: str) -> None:
     """ Scrape realestate.com.au for a specific postcode using a normal browser instance """
     logging.info(f"scrape_realestate_postcode: {postcode}")
     try:                        
-        open_chrome()
+        open_brave()
 
         # Now navigate to search pages for each postcode and capture
         page_num = 1
         while True:
-            url = f"https://www.realestate.com.au/rent/in-{postcode}/list-{page_num}?includeSurrounding=false"
+            url = SEARCH_URL_TEMPLATE.format(postcode=postcode, page_num=page_num)
             navigate_to(url)
 
             # Generate file name
@@ -166,6 +180,6 @@ def scrape_realestate_postcode(postcode: str) -> None:
         logging.error(f"Error scraping postcode {postcode}: {e}\n{traceback.format_exc()}")
 
     finally:
-        close_chrome()
+        close_brave()
         logging.info(f"Finished scraping postcode {postcode}")
-        time.sleep(2)  # Give some time before next iteration
+        time.sleep(ITERATION_WAIT)
