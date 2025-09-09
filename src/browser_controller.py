@@ -106,14 +106,10 @@ class BraveBrowserController(BrowserController):
         )
 
         mouse = MouseController(always_zigzag=True)
-        screen_width, screen_height = pyautogui.size()
-        logging.info(
-            f"perform_initial_setup: Screen dimensions detected: {screen_width}x{screen_height}"
-        )
 
         # Brief initial browsing simulation
         logging.info("perform_initial_setup: Simulating initial reading pattern")
-        self._simulate_reading_pattern(mouse, screen_width, screen_height)
+        self._simulate_reading_pattern(mouse)
 
         wait_time = random.uniform(2, 4)
         logging.info(
@@ -250,9 +246,7 @@ class BraveBrowserController(BrowserController):
             int(screen_height * 0.9),
         )
 
-    def generate_random_coordinates(
-        self, screen_width: int, screen_height: int
-    ) -> Tuple[int, int]:
+    def generate_random_coordinates(self) -> Tuple[int, int]:
         """Generate random coordinates within browser content area"""
         content_left, content_top, content_right, content_bottom = (
             self._get_browser_content_area()
@@ -269,14 +263,10 @@ class BraveBrowserController(BrowserController):
         )
 
         mouse = MouseController(always_zigzag=True)
-        screen_width, screen_height = pyautogui.size()
-        logging.info(
-            f"perform_human_like_activity: Using screen dimensions {screen_width}x{screen_height}"
-        )
 
         # Simulate reading the page content
         logging.info("perform_human_like_activity: Phase 1 - Simulating page reading")
-        self._simulate_reading_pattern(mouse, screen_width, screen_height)
+        self._simulate_reading_pattern(mouse)
 
         # Natural scrolling behavior
         logging.info(
@@ -288,9 +278,7 @@ class BraveBrowserController(BrowserController):
             "perform_human_like_activity: All human-like browsing simulation phases complete"
         )
 
-    def _simulate_reading_pattern(
-        self, mouse: MouseController, screen_width: int, screen_height: int
-    ) -> None:
+    def _simulate_reading_pattern(self, mouse: MouseController) -> None:
         """Simulate reading text in a natural left-to-right, top-to-bottom pattern"""
         content_left, content_top, content_right, content_bottom = (
             self._get_browser_content_area()
@@ -365,9 +353,8 @@ class BraveBrowserController(BrowserController):
                 f"_simulate_natural_scrolling: Moving to random position with speed {speed:.2f}"
             )
             # Generate random coordinates within browser bounds
-            rand_x, rand_y = self.generate_random_coordinates(
-                0, 0
-            )  # screen params not used anymore
+            rand_x, rand_y = self.generate_random_coordinates()
+
             mouse.move(rand_x, rand_y, speed_factor=speed)
 
             move_pause = random.uniform(0.2, 0.5)
@@ -377,7 +364,7 @@ class BraveBrowserController(BrowserController):
             time.sleep(move_pause)
 
             # Small scroll amounts like a human reading
-            scroll_amount = random.randint(100, 300)
+            scroll_amount = random.randint(3, 12)
             logging.info(
                 f"_simulate_natural_scrolling: Scrolling down {scroll_amount} pixels"
             )
@@ -392,7 +379,7 @@ class BraveBrowserController(BrowserController):
 
             # Occasionally scroll back up slightly (like re-reading)
             if random.random() < 0.3:
-                back_scroll = random.randint(50, 100)
+                back_scroll = random.randint(3, 12)
                 logging.info(
                     f"_simulate_natural_scrolling: Re-reading - scrolling back up {back_scroll} pixels"
                 )
