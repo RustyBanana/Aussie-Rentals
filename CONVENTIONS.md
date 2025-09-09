@@ -24,6 +24,7 @@ This is a web scraping automation project that uses browser automation to collec
 - Use type hints where they add clarity
 - Log important operations and errors for debugging
 - Make functions pure and testable where possible by avoiding global state
+- While keeping functions modular, ensure that they also perform substantial work themselves rather than simply being a thin wrapper
 
 ### Browser Automation
 

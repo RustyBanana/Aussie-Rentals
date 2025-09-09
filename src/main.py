@@ -1,4 +1,5 @@
-from scrape import scrape_realestate_postcode, POSTCODES_FILE, MIN_POSTCODE
+from scrape import scrape_realestate_postcode
+from constants import POSTCODES_FILE, MIN_POSTCODE
 from tqdm import tqdm
 
 
