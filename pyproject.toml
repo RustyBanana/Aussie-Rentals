@@ -9,3 +9,11 @@ dependencies = [
     "pyautogui>=0.9.54",
     "tqdm>=4.67.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
