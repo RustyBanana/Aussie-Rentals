@@ -1,0 +1,10 @@
+[project]
+name = "aussie-rentals"
+version = "0.1.0"
+description = "Explore aussie rentals"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pyautogui>=0.9.54",
+    "tqdm>=4.67.1",
+]
