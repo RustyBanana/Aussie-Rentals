@@ -8,7 +8,6 @@ from abc import ABC, abstractmethod
 from typing import Optional, Tuple
 
 import pyautogui
-from human_mouse import MouseController
 
 from constants import (
     BRAVE_BROWSER_COMMAND,
@@ -105,22 +104,21 @@ class BraveBrowserController(BrowserController):
             "perform_initial_setup: Beginning initial human-like browsing simulation"
         )
 
-        mouse = MouseController(always_zigzag=True)
-
         # Brief initial browsing simulation
         logging.info("perform_initial_setup: Simulating initial reading pattern")
-        self._simulate_reading_pattern(mouse)
+        self._simulate_reading_pattern()
 
-        wait_time = random.uniform(2, 4)
+        wait_time = random.uniform(0.5, 1.5)
         logging.info(
             f"perform_initial_setup: Pausing for {wait_time:.2f} seconds between activities"
         )
         time.sleep(wait_time)
 
         logging.info("perform_initial_setup: Simulating initial natural scrolling")
-        self._simulate_natural_scrolling(mouse)
+        self._simulate_natural_scrolling()
 
         logging.info("perform_initial_setup: Initial setup complete")
+        time.sleep(1)
 
     def close_browser(self) -> None:
         logging.info("close_browser")
@@ -153,6 +151,13 @@ class BraveBrowserController(BrowserController):
         logging.info(f"save_page: Saving page to {filepath}")
 
         logging.info("save_page: Opening save dialog with Ctrl+S")
+        time.sleep(0.5)
+        pyautogui.hotkey("ctrl", "a")
+        time.sleep(0.5)
+        pyautogui.hotkey("ctrl", "s")
+        time.sleep(0.5)
+        pyautogui.hotkey("ctrl", "a")
+        time.sleep(0.5)
         pyautogui.hotkey("ctrl", "s")
         time.sleep(SAVE_DIALOG_WAIT)
 
@@ -161,14 +166,16 @@ class BraveBrowserController(BrowserController):
 
         # Type the full file path and save
         logging.info("save_page: Entering file path")
+        pyautogui.hotkey("ctrl", "a")
+        time.sleep(KEYBOARD_DELAY)
         pyautogui.write(absolute_filepath)
 
         # Select HTML only option
         logging.info("save_page: Navigating to HTML-only save format")
-        pyautogui.press("tab")
-        pyautogui.press("right")
-        pyautogui.press("up")
-        pyautogui.press("up")
+        pyautogui.hotkey("shift", "tab")
+        pyautogui.hotkey("shift", "tab")
+        pyautogui.press("enter")
+        pyautogui.press("down")
         pyautogui.press("enter")
 
         # Press Save
@@ -262,23 +269,21 @@ class BraveBrowserController(BrowserController):
             "perform_human_like_activity: Starting comprehensive human-like browsing simulation"
         )
 
-        mouse = MouseController(always_zigzag=True)
-
         # Simulate reading the page content
         logging.info("perform_human_like_activity: Phase 1 - Simulating page reading")
-        self._simulate_reading_pattern(mouse)
+        self._simulate_reading_pattern()
 
         # Natural scrolling behavior
         logging.info(
             "perform_human_like_activity: Phase 2 - Simulating natural scrolling"
         )
-        self._simulate_natural_scrolling(mouse)
+        self._simulate_natural_scrolling()
 
         logging.info(
             "perform_human_like_activity: All human-like browsing simulation phases complete"
         )
 
-    def _simulate_reading_pattern(self, mouse: MouseController) -> None:
+    def _simulate_reading_pattern(self) -> None:
         """Simulate reading text in a natural left-to-right, top-to-bottom pattern"""
         content_left, content_top, content_right, content_bottom = (
             self._get_browser_content_area()
@@ -292,7 +297,7 @@ class BraveBrowserController(BrowserController):
         )
 
         # Simulate reading 3-4 lines of text
-        num_lines = random.randint(3, 4)
+        num_lines = random.randint(1, 2)
         line_height = 25  # Approximate line height in pixels
         logging.info(
             f"_simulate_reading_pattern: Will simulate reading {num_lines} lines"
@@ -305,11 +310,11 @@ class BraveBrowserController(BrowserController):
             )
 
             # Move to start of line with natural movement
-            speed = random.uniform(0.8, 1.2)
+            duration = random.uniform(0.3, 0.8)
             logging.info(
-                f"_simulate_reading_pattern: Moving to line start with speed factor {speed:.2f}"
+                f"_simulate_reading_pattern: Moving to line start with duration {duration:.2f}s"
             )
-            mouse.move(start_x, y_pos, speed_factor=speed)
+            pyautogui.moveTo(start_x, y_pos, duration=duration)
 
             pause_time = random.uniform(0.1, 0.3)
             logging.info(
@@ -320,11 +325,11 @@ class BraveBrowserController(BrowserController):
             # Read across the line (simulate eye movement) - stay within browser bounds
             max_line_length = min(600, content_right - start_x - 50)
             end_x = start_x + random.randint(300, max_line_length)
-            read_speed = random.uniform(0.6, 1.0)
+            read_duration = random.uniform(0.5, 1.2)
             logging.info(
-                f"_simulate_reading_pattern: Reading across line to x={end_x} with speed {read_speed:.2f}"
+                f"_simulate_reading_pattern: Reading across line to x={end_x} with duration {read_duration:.2f}s"
             )
-            mouse.move(end_x, y_pos, speed_factor=read_speed)
+            pyautogui.moveTo(end_x, y_pos, duration=read_duration)
 
             # Pause at end of line (reading time)
             read_time = random.uniform(0.8, 1.5)
@@ -335,9 +340,9 @@ class BraveBrowserController(BrowserController):
 
         logging.info("_simulate_reading_pattern: Reading pattern simulation complete")
 
-    def _simulate_natural_scrolling(self, mouse: MouseController) -> None:
+    def _simulate_natural_scrolling(self) -> None:
         """Simulate natural scrolling behavior while reading"""
-        num_scrolls = random.randint(2, 4)
+        num_scrolls = random.randint(1, 2)
         logging.info(
             f"_simulate_natural_scrolling: Will perform {num_scrolls} scroll actions"
         )
@@ -348,14 +353,14 @@ class BraveBrowserController(BrowserController):
             )
 
             # Move to a random position within browser before scrolling (more natural)
-            speed = random.uniform(1.0, 2.0)
+            duration = random.uniform(0.3, 0.8)
             logging.info(
-                f"_simulate_natural_scrolling: Moving to random position with speed {speed:.2f}"
+                f"_simulate_natural_scrolling: Moving to random position with duration {duration:.2f}s"
             )
             # Generate random coordinates within browser bounds
             rand_x, rand_y = self.generate_random_coordinates()
 
-            mouse.move(rand_x, rand_y, speed_factor=speed)
+            pyautogui.moveTo(rand_x, rand_y, duration=duration)
 
             move_pause = random.uniform(0.2, 0.5)
             logging.info(

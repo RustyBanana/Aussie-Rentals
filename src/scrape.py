@@ -6,24 +6,16 @@ from datetime import datetime
 from typing import Optional
 
 from browser_controller import (
-    BraveBrowserController,
     BrowserController,
     calculate_wait_time,
 )
 from constants import (
     ITERATION_WAIT,
-    LOG_FILE,
     OUTPUT_DIR,
     SEARCH_URL_TEMPLATE,
 )
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-logging.basicConfig(
-    filename=LOG_FILE,
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 
 
 def random_wait(base: float = 5, jitter: float = 5, max_wait: float = 30) -> None:

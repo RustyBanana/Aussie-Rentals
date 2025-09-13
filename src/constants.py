@@ -12,8 +12,8 @@ MIN_POSTCODE = "2008"
 # Wait time constants
 BROWSER_OPEN_WAIT = 1.2
 PAGE_LOAD_BASE_WAIT = 2
-PAGE_LOAD_JITTER = 2
-SAVE_WAIT = 3
+PAGE_LOAD_JITTER = 1
+SAVE_WAIT = 2
 ITERATION_WAIT = 1.6
 
 # Browser automation timing constants

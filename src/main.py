@@ -1,10 +1,15 @@
+import logging
 from typing import List
-
-from tqdm import tqdm
 
 from browser_controller import BraveBrowserController
 from constants import MIN_POSTCODE, POSTCODES_FILE
-from scrape import scrape_realestate_postcode
+
+logging.basicConfig(
+    # filename=LOG_FILE,
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 if __name__ == "__main__":
     with open(POSTCODES_FILE, "r") as file:
@@ -22,12 +27,15 @@ if __name__ == "__main__":
     try:
         browser_controller.open_browser()
         browser_controller.perform_initial_setup()
+        browser_controller.save_page(
+            "/home/william/projects/Aussie-Rentals/data/test.html"
+        )
 
         # Given the list of populated postcodes, scrape each one
-        pbar = tqdm(postcodes, desc="Scraping Realestate Postcodes", unit="postcode")
+        # pbar = tqdm(postcodes, desc="Scraping Realestate Postcodes", unit="postcode")
 
-        for postcode in pbar:
-            scrape_realestate_postcode(postcode, browser_controller)
+        # for postcode in pbar:
+        #     scrape_realestate_postcode(postcode, browser_controller)
 
     finally:
         browser_controller.close_browser()
