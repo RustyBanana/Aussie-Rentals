@@ -16,7 +16,6 @@ from constants import (
     KEYBOARD_DELAY,
     PAGE_LOAD_BASE_WAIT,
     PAGE_LOAD_JITTER,
-    SAVE_DIALOG_WAIT,
     SAVE_WAIT,
     USER_DATA_DIR,
 )
@@ -151,31 +150,52 @@ class BraveBrowserController(BrowserController):
         logging.info(f"save_page: Saving page to {filepath}")
 
         logging.info("save_page: Opening save dialog with Ctrl+S")
-        time.sleep(0.5)
-        pyautogui.hotkey("ctrl", "a")
-        time.sleep(0.5)
+        content_left, content_top, content_right, content_bottom = (
+            self._get_browser_content_area()
+        )
+
+        # Start from top-left area of browser content where text typically begins
+        start_x = content_left + 50  # Small margin from left edge
+        start_y = content_top + 50  # Small margin from top
+        pyautogui.moveTo(start_x, start_y, duration=0.4)
+
+        logging.info("save_page: Right clicked")
+        pyautogui.rightClick()  # Ensure browser is focused
+        pyautogui.rightClick()  # Ensure browser is focused
         pyautogui.hotkey("ctrl", "s")
-        time.sleep(0.5)
-        pyautogui.hotkey("ctrl", "a")
-        time.sleep(0.5)
-        pyautogui.hotkey("ctrl", "s")
-        time.sleep(SAVE_DIALOG_WAIT)
+
+        # Ensure the save dialog is in focus
+        middle_x = (content_left + content_right) // 2
+        middle_y = (content_top + content_bottom) // 2
+        pyautogui.moveTo(middle_x - 60, middle_y - 60, duration=0.5)
+        pyautogui.rightClick()
+        pyautogui.rightClick()
 
         absolute_filepath = os.path.abspath(filepath)
         logging.info(f"save_page: Using absolute path: {absolute_filepath}")
 
         # Type the full file path and save
         logging.info("save_page: Entering file path")
+        pyautogui.hotkey("ctrl", "l")
         pyautogui.hotkey("ctrl", "a")
         time.sleep(KEYBOARD_DELAY)
         pyautogui.write(absolute_filepath)
 
         # Select HTML only option
         logging.info("save_page: Navigating to HTML-only save format")
+        # Navigate to format dropdown
         pyautogui.hotkey("shift", "tab")
         pyautogui.hotkey("shift", "tab")
+        # Select HTML only option
         pyautogui.press("enter")
         pyautogui.press("down")
+        pyautogui.press("up")
+        pyautogui.press("enter")
+        # Navigate to Save button
+        pyautogui.press("tab")
+        pyautogui.press("tab")
+        pyautogui.press("tab")
+        pyautogui.press("tab")
         pyautogui.press("enter")
 
         # Press Save

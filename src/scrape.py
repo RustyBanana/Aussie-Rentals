@@ -44,8 +44,6 @@ def check_stop(filename: str) -> bool:
         logging.info("check_stop: Continue")
         return False
 
-    logging.info(f"check_stop: Stop. Deleting file: {filename}")
-    os.remove(filename)
     return True
 
 
@@ -59,8 +57,22 @@ def generate_filename(
 ) -> str:
     """Pure function to generate filename for scraped page"""
     if timestamp is None:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return f"{OUTPUT_DIR}/{postcode}_{page_num}_{timestamp}.html"
+        date = datetime.now().strftime("%Y%m%d")
+        # time = datetime.now().strftime("%H%M%S")
+    return f"{OUTPUT_DIR}/{date}_{postcode}_{page_num}.html"
+
+
+def generate_completed_filename(postcode: str, timestamp: Optional[str] = None) -> str:
+    """Pure function to generate completed filename for a postcode"""
+    if timestamp is None:
+        date = datetime.now().strftime("%Y%m%d")
+    return f"{OUTPUT_DIR}/{date}_{postcode}_completed.html"
+
+
+def is_postcode_completed(postcode: str) -> bool:
+    """Check if a postcode has already been completed"""
+    completed_filename = generate_completed_filename(postcode)
+    return os.path.exists(completed_filename)
 
 
 def scrape_single_page(
@@ -77,13 +89,32 @@ def scrape_single_page(
     return filename
 
 
+def handle_stopping_file(filename: str, postcode: str) -> None:
+    """Handle a file that triggers the stopping condition"""
+    completed_filename = generate_completed_filename(postcode)
+    os.rename(filename, completed_filename)
+    logging.info(f"Renamed stopping file to: {completed_filename}")
+
+
 def scrape_all_pages(postcode: str, browser_controller: BrowserController) -> None:
     """Scrape all pages for a postcode until stopping condition is met"""
     page_num = 1
     while True:
+        filename = generate_filename(postcode, page_num)
+
+        # Skip scraping if file already exists
+        if os.path.exists(filename):
+            logging.info(f"File already exists, skipping: {filename}")
+            if check_stop(filename):
+                handle_stopping_file(filename, postcode)
+                break
+            page_num += 1
+            continue
+
         filename = scrape_single_page(postcode, page_num, browser_controller)
 
         if check_stop(filename):
+            handle_stopping_file(filename, postcode)
             break
 
         page_num += 1
